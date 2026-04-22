@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReadUp</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0f0f13;--surface:#18181f;--surface2:#22222c;
+  --border:rgba(255,255,255,0.07);--text:#e8e4dc;--muted:#7a7a8a;
+  --accent:#e8a020;--accent2:#4fa3e0;--green:#3dbf7a;--red:#e05555;
+  --tag-bg:rgba(232,160,32,0.1);
+}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:0.4;}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:rgba(15,15,19,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Lora',serif;font-size:1.2rem;color:var(--text);letter-spacing:-0.01em;}
+.logo em{color:var(--accent);font-style:italic;}
+.nav-tabs{display:flex;gap:2px;}
+.nav-tab{padding:7px 14px;background:transparent;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:var(--muted);cursor:pointer;border-radius:6px;transition:all 0.2s;position:relative;}
+.nav-tab.active{background:var(--surface2);color:var(--text);}
+.nav-tab:hover:not(.active){color:var(--text);}
+.nav-badge{position:absolute;top:4px;right:4px;background:var(--accent);color:#000;font-size:0.55rem;font-weight:700;font-family:'IBM Plex Mono',monospace;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+
+/* SCREENS */
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ======================== LIBRARY ======================== */
+.library-header{padding:32px 20px 20px;max-width:720px;margin:0 auto;}
+.library-title{font-family:'Lora',serif;font-size:1.6rem;font-weight:700;margin-bottom:6px;}
+.library-sub{font-size:0.85rem;color:var(--muted);}
+.filter-row{display:flex;gap:8px;padding:0 20px 20px;max-width:720px;margin:0 auto;flex-wrap:wrap;}
+.filter-btn{padding:5px 14px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;cursor:pointer;transition:all 0.2s;}
+.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:500;}
+.article-grid{max-width:720px;margin:0 auto;padding:0 20px 80px;display:grid;gap:12px;}
+.article-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;cursor:pointer;display:flex;align-items:center;gap:16px;transition:all 0.2s;position:relative;overflow:hidden;}
+.article-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:3px 0 0 3px;opacity:0;transition:opacity 0.2s;}
+.article-card:hover{border-color:rgba(255,255,255,0.15);transform:translateX(2px);}
+.article-card:hover::before{opacity:1;}
+.card-icon{width:48px;height:48px;background:var(--surface2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.card-body{flex:1;min-width:0;}
+.card-title{font-family:'Lora',serif;font-size:1rem;font-weight:600;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.level-pill{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;padding:2px 8px;border-radius:4px;font-weight:500;}
+.level-A1{background:rgba(61,191,122,0.15);color:#3dbf7a;}
+.level-A2{background:rgba(79,163,224,0.15);color:#4fa3e0;}
+.level-B1{background:rgba(232,160,32,0.15);color:#e8a020;}
+.level-B2{background:rgba(224,85,85,0.15);color:#e05555;}
+.card-topic{font-size:0.75rem;color:var(--muted);}
+.card-arrow{color:var(--muted);font-size:1.1rem;flex-shrink:0;}
+.card-read-badge{position:absolute;top:12px;right:12px;font-size:0.6rem;color:var(--green);font-family:'IBM Plex Mono',monospace;opacity:0.7;}
+
+/* ======================== READER ======================== */
+.reader-topbar{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:90;background:rgba(15,15,19,0.95);backdrop-filter:blur(8px);}
+.back-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 12px;font-size:0.82rem;cursor:pointer;transition:all 0.2s;font-family:'IBM Plex Sans',sans-serif;}
+.back-btn:hover{background:var(--surface2);}
+.reader-title-bar{font-family:'Lora',serif;font-size:0.9rem;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.reader-progress{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--muted);flex-shrink:0;}
+.reader-body{max-width:640px;margin:0 auto;padding:32px 20px 60px;}
+.reader-meta{display:flex;gap:8px;margin-bottom:20px;align-items:center;}
+.reader-main-title{font-family:'Lora',serif;font-size:1.8rem;font-weight:700;line-height:1.25;margin-bottom:28px;}
+.reading-text{font-size:1.08rem;line-height:2;}
+
+/* WORD STYLES */
+.w{cursor:pointer;border-radius:2px;transition:all 0.12s;padding:0 1px;}
+.w:hover{background:rgba(232,160,32,0.18);}
+.w.seen{color:var(--accent);}
+.w.in-vocab{border-bottom:2px solid rgba(61,191,122,0.6);color:#5de89a;}
+
+/* POPUP */
+.word-popup{position:fixed;z-index:500;background:var(--surface2);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:0;max-width:260px;min-width:200px;box-shadow:0 20px 60px rgba(0,0,0,0.7);opacity:0;pointer-events:none;transition:opacity 0.15s,transform 0.15s;transform:translateY(-6px) scale(0.97);}
+.word-popup.show{opacity:1;pointer-events:all;transform:translateY(0) scale(1);}
+.popup-inner{padding:14px 16px;}
+.popup-word{font-family:'Lora',serif;font-size:1.2rem;color:var(--accent);font-weight:700;margin-bottom:2px;}
+.popup-type{font-family:'IBM Plex Mono',monospace;font-size:0.63rem;color:var(--muted);margin-bottom:10px;}
+.popup-mn{font-size:0.97rem;color:var(--text);margin-bottom:8px;line-height:1.4;}
+.popup-ex{font-size:0.75rem;color:var(--muted);font-style:italic;padding-top:8px;border-top:1px solid var(--border);margin-bottom:10px;}
+.popup-add-btn{width:100%;padding:8px;background:var(--tag-bg);border:1px solid rgba(232,160,32,0.3);color:var(--accent);border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.popup-add-btn:hover{background:rgba(232,160,32,0.2);}
+.popup-add-btn.added{background:rgba(61,191,122,0.1);border-color:rgba(61,191,122,0.3);color:var(--green);}
+.popup-add-btn.added:hover{background:rgba(61,191,122,0.15);}
+.popup-footer{padding:10px 16px;border-top:1px solid var(--border);}
+
+/* VOCAB BAR */
+.vocab-bar{margin-top:32px;padding:20px;background:var(--surface);border-radius:10px;border:1px solid var(--border);}
+.vocab-bar-title{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:14px;}
+.vocab-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.vocab-chip{padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:all 0.15s;}
+.vocab-chip:hover{border-color:var(--accent);background:var(--tag-bg);}
+.chip-en{font-size:0.85rem;color:var(--text);}
+.chip-mn{font-size:0.72rem;color:var(--muted);margin-top:1px;}
+
+.reader-actions{display:flex;gap:10px;margin-top:32px;}
+.btn-main{flex:1;padding:14px;background:var(--accent);color:#000;border:none;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.92rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.btn-main:hover{background:#f0b030;}
+.btn-ghost{padding:14px 20px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.92rem;cursor:pointer;transition:all 0.2s;}
+.btn-ghost:hover{background:var(--surface2);}
+
+/* ======================== VOCAB SCREEN ======================== */
+.vocab-screen-body{max-width:720px;margin:0 auto;padding:24px 20px 80px;}
+.vocab-screen-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.vocab-screen-title{font-family:'Lora',serif;font-size:1.4rem;font-weight:700;}
+.vocab-clear-btn{padding:7px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;font-size:0.78rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all 0.2s;}
+.vocab-clear-btn:hover{border-color:var(--red);color:var(--red);}
+.vocab-screen-sub{font-size:0.82rem;color:var(--muted);margin-bottom:24px;}
+
+.vocab-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+.vc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all 0.2s;position:relative;}
+.vc:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.vc-en{font-family:'Lora',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:6px;}
+.vc-mn{font-size:0.82rem;color:var(--muted);line-height:1.4;}
+.vc-type{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--accent);margin-bottom:6px;}
+.vc-del{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--muted);font-size:0.9rem;cursor:pointer;opacity:0;transition:opacity 0.2s;}
+.vc:hover .vc-del{opacity:1;}
+.vc-del:hover{color:var(--red);}
+
+/* STUDY MODE */
+.study-btn{padding:10px 20px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;cursor:pointer;transition:all 0.2s;}
+.study-btn:hover{background:var(--accent);color:#000;border-color:var(--accent);}
+.study-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,14,0.95);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.study-overlay.show{display:flex;}
+.study-card-wrap{max-width:380px;width:90%;text-align:center;}
+.study-close{position:absolute;top:20px;right:20px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:8px 14px;font-size:0.82rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
+.study-card{background:var(--surface);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:48px 32px;margin-bottom:20px;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.study-card:hover{transform:translateY(-2px);}
+.study-en{font-family:'Lora',serif;font-size:2rem;color:var(--text);font-weight:700;margin-bottom:8px;}
+.study-type{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--muted);}
+.study-mn{font-size:1.1rem;color:var(--accent);margin-top:20px;display:none;}
+.study-mn.show{display:block;}
+.study-hint{font-size:0.75rem;color:var(--muted);margin-top:12px;}
+.study-nav{display:flex;gap:12px;justify-content:center;}
+.study-nav-btn{padding:10px 24px;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;}
+.s-next{background:var(--accent);color:#000;}
+.s-next:hover{background:#f0b030;}
+.s-prev{background:var(--surface2);color:var(--text);}
+.s-prev:hover{background:var(--surface);}
+.study-prog{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted);text-align:center;margin-bottom:16px;}
+
+/* ======================== QUIZ ======================== */
+.quiz-body{max-width:640px;margin:0 auto;padding:24px 20px 80px;}
+.quiz-list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.quiz-list-title{font-family:'Lora',serif;font-size:1.3rem;font-weight:700;}
+.add-quiz-btn{padding:8px 16px;background:var(--accent);color:#000;border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.add-quiz-btn:hover{background:#f0b030;}
+.quiz-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.2s;}
+.quiz-item:hover{border-color:rgba(255,255,255,0.15);transform:translateX(2px);}
+.quiz-item-body{flex:1;}
+.quiz-item-title{font-family:'Lora',serif;font-size:0.95rem;font-weight:600;margin-bottom:4px;}
+.quiz-item-meta{font-size:0.78rem;color:var(--muted);}
+.quiz-item-score{font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--green);font-weight:500;}
+.quiz-form{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;display:none;}
+.quiz-form.open{display:block;}
+.form-title{font-family:'Lora',serif;font-size:1.1rem;font-weight:600;margin-bottom:18px;}
+.form-field{margin-bottom:14px;}
+.form-label{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;display:block;margin-bottom:6px;}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:10px 12px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;}
+.form-input:focus{border-color:rgba(232,160,32,0.5);}
+.form-input::placeholder{color:var(--muted);}
+.q-builder{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:10px;position:relative;}
+.q-num{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent);margin-bottom:8px;}
+.q-delete{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;}
+.opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.opt-row{display:flex;gap:6px;align-items:center;}
+.opt-radio{accent-color:var(--green);cursor:pointer;flex-shrink:0;}
+.opt-input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:6px 10px;font-size:0.82rem;font-family:'IBM Plex Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+.opt-input:focus{border-color:rgba(232,160,32,0.4);}
+.add-q-btn{width:100%;padding:10px;background:var(--surface2);border:1px dashed var(--border);color:var(--muted);border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;cursor:pointer;transition:all 0.2s;margin-top:6px;}
+.add-q-btn:hover{border-color:var(--accent);color:var(--accent);}
+.form-actions{display:flex;gap:10px;margin-top:16px;}
+.btn-save{flex:1;padding:12px;background:var(--accent);color:#000;border:none;border-radius:6px;font-weight:600;font-size:0.9rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
+.btn-cancel{padding:12px 18px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:0.9rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
+.quiz-take{display:none;}
+.quiz-take.active{display:block;}
+.take-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.take-title{font-family:'Lora',serif;font-size:1.2rem;font-weight:700;flex:1;}
+.take-prog{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--muted);}
+.prog-bar{height:3px;background:var(--surface2);border-radius:99px;margin-bottom:28px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent);border-radius:99px;transition:width 0.5s;}
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 24px;box-shadow:0 4px 24px rgba(0,0,0,0.3);}
+.q-label{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;}
+.q-text{font-family:'Lora',serif;font-size:1.1rem;line-height:1.5;margin-bottom:20px;}
+.q-opts{display:flex;flex-direction:column;gap:10px;}
+.q-opt{padding:13px 16px;background:var(--surface2);color:var(--text);border:1.5px solid var(--border);border-radius:8px;font-size:0.92rem;cursor:pointer;text-align:left;transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif;}
+.q-opt:hover:not(:disabled){border-color:rgba(255,255,255,0.2);background:#2a2a35;transform:translateX(3px);}
+.q-opt.correct{background:rgba(61,191,122,0.12);border-color:var(--green);color:var(--green);}
+.q-opt.wrong{background:rgba(224,85,85,0.1);border-color:var(--red);color:var(--red);}
+.q-opt:disabled{cursor:default;}
+.q-fb{margin-top:16px;padding:12px 16px;border-radius:6px;font-size:0.88rem;line-height:1.5;display:none;}
+.q-fb.show{display:block;}
+.q-fb.ok{background:rgba(61,191,122,0.1);border-left:3px solid var(--green);color:#7de8a8;}
+.q-fb.bad{background:rgba(224,85,85,0.08);border-left:3px solid var(--red);color:#e08080;}
+.result-box{text-align:center;padding:40px 24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.result-big{font-family:'Lora',serif;font-size:4.5rem;color:var(--text);line-height:1;}
+.result-big span{color:var(--accent);}
+.result-sub{color:var(--muted);font-size:1rem;margin:8px 0 28px;}
+.result-detail{background:var(--surface2);border-radius:8px;padding:16px;margin-bottom:24px;text-align:left;}
+.result-detail-title{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;margin-bottom:10px;}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-icon{font-size:2.5rem;display:block;margin-bottom:12px;opacity:0.4;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 20px;font-size:0.85rem;z-index:600;transition:transform 0.3s;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+@media(max-width:480px){
+  .opts-grid{grid-template-columns:1fr;}
+  .reader-main-title{font-size:1.4rem;}
+  .result-big{font-size:3.5rem;}
+  .vocab-cards-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- WORD POPUP -->
+<div class="word-popup" id="popup">
+  <div class="popup-inner">
+    <div class="popup-word" id="p-word"></div>
+    <div class="popup-type" id="p-type"></div>
+    <div class="popup-mn" id="p-mn"></div>
+    <div class="popup-ex" id="p-ex"></div>
+  </div>
+  <div class="popup-footer">
+    <button class="popup-add-btn" id="p-add-btn" onclick="addFromPopup()">
+      <span id="p-add-icon">＋</span>
+      <span id="p-add-text">Үгийн санд нэмэх</span>
+    </button>
+  </div>
+</div>
+
+<!-- STUDY OVERLAY -->
+<div class="study-overlay" id="studyOverlay">
+  <button class="study-close" onclick="closeStudy()">✕ Хаах</button>
+  <div class="study-card-wrap">
+    <div class="study-prog" id="studyProg"></div>
+    <div class="study-card" id="studyCard" onclick="revealStudy()">
+      <div class="study-en" id="studyEn"></div>
+      <div class="study-type" id="studyType"></div>
+      <div class="study-mn" id="studyMn"></div>
+      <div class="study-hint" id="studyHint">→ Дарж орчуулга харах</div>
+    </div>
+    <div class="study-nav">
+      <button class="study-nav-btn s-prev" onclick="studyNav(-1)">← Өмнөх</button>
+      <button class="study-nav-btn s-next" onclick="studyNav(1)">Дараах →</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">Read<em>Up</em></div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('library',this)">📚 Номын сан</button>
+    <button class="nav-tab" onclick="switchTab('vocab',this)" id="vocabTab">
+      🗂 Үгийн сан
+      <span class="nav-badge" id="vocabBadge" style="display:none;"></span>
+    </button>
+    <button class="nav-tab" onclick="switchTab('quiz',this)">📝 Тест</button>
+  </nav>
+</header>
+
+<!-- ==================== LIBRARY ==================== -->
+<div class="screen active" id="scr-library">
+  <div class="library-header">
+    <h1 class="library-title">Номын сан</h1>
+    <p class="library-sub">Аль ч үг дарахад орчуулга харагдана • ＋ товч дарж үгийн санд нэмнэ</p>
+  </div>
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="filterArticles('all',this)">Бүгд</button>
+    <button class="filter-btn" onclick="filterArticles('A1',this)">A1</button>
+    <button class="filter-btn" onclick="filterArticles('A2',this)">A2</button>
+    <button class="filter-btn" onclick="filterArticles('B1',this)">B1</button>
+    <button class="filter-btn" onclick="filterArticles('B2',this)">B2</button>
+  </div>
+  <div class="article-grid" id="articleGrid"></div>
+</div>
+
+<!-- ==================== READER ==================== -->
+<div class="screen" id="scr-reader">
+  <div class="reader-topbar">
+    <button class="back-btn" onclick="backToLibrary()">← Буцах</button>
+    <div class="reader-title-bar" id="readerTitleBar"></div>
+    <div class="reader-progress" id="readerProgress"></div>
+  </div>
+  <div class="reader-body">
+    <div class="reader-meta" id="readerMeta"></div>
+    <h1 class="reader-main-title" id="readerTitle"></h1>
+    <div class="reading-text" id="readerText"></div>
+    <div class="vocab-bar" id="vocabBar" style="display:none;">
+      <div class="vocab-bar-title">🔑 Гол үгс</div>
+      <div class="vocab-chips" id="vocabChips"></div>
+    </div>
+    <div class="reader-actions">
+      <button class="btn-main" onclick="switchTab('quiz', document.querySelectorAll('.nav-tab')[2])">📝 Тест өгөх →</button>
+      <button class="btn-ghost" onclick="backToLibrary()">← Номын сан</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VOCAB SCREEN ==================== -->
+<div class="screen" id="scr-vocab">
+  <div class="vocab-screen-body">
+    <div class="vocab-screen-header">
+      <h2 class="vocab-screen-title">🗂 Үгийн сан</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="study-btn" onclick="startStudy()">📖 Цээжлэх</button>
+        <button class="vocab-clear-btn" onclick="clearAllVocab()">Бүгд устгах</button>
+      </div>
+    </div>
+    <p class="vocab-screen-sub" id="vocabScreenSub">Уншлага дахь үгс дарж ＋ товч дарахад энд хадгалагдана</p>
+    <div class="vocab-cards-grid" id="vocabCardsGrid"></div>
+  </div>
+</div>
+
+<!-- ==================== QUIZ ==================== -->
+<div class="screen" id="scr-quiz">
+  <div class="quiz-body">
+    <div id="quizListView">
+      <div class="quiz-list-header">
+        <h2 class="quiz-list-title">Тестүүд</h2>
+        <button class="add-quiz-btn" onclick="toggleAddForm()">+ Тест нэмэх</button>
+      </div>
+      <div class="quiz-form" id="quizForm">
+        <div class="form-title">✏️ Шинэ тест үүсгэх</div>
+        <div class="form-field">
+          <label class="form-label">Тестийн нэр</label>
+          <input class="form-input" id="qTitle" placeholder="Жишээ: Unit 3 Vocabulary Test">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Түвшин</label>
+          <select class="form-input" id="qLevel">
+            <option value="A1">A1</option>
+            <option value="A2" selected>A2</option>
+            <option value="B1">B1</option>
+            <option value="B2">B2</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Асуултууд</label>
+          <div id="qBuilderList"></div>
+          <button class="add-q-btn" onclick="addQuestion()">+ Асуулт нэмэх</button>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="saveQuiz()">Хадгалах</button>
+          <button class="btn-cancel" onclick="toggleAddForm()">Цуцлах</button>
+        </div>
+      </div>
+      <div id="quizCards"></div>
+    </div>
+    <div class="quiz-take" id="quizTakeView">
+      <div class="take-header">
+        <button class="btn-ghost" onclick="endQuiz()" style="padding:7px 12px;font-size:0.8rem;">← Буцах</button>
+        <div class="take-title" id="takeTitleEl"></div>
+        <div class="take-prog" id="takeProgEl"></div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      <div id="qCardArea"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DICTIONARY ====================
+const D={
+  'the':{mn:'тодорхой нэр',type:'article'},'a':{mn:'нэг (тодойгүй)',type:'article'},'an':{mn:'нэг (эгшгийн өмнө)',type:'article'},
+  'is':{mn:'байна, мөн',type:'verb',ex:'She is happy.'},'are':{mn:'байна (олон тоо)',type:'verb',ex:'They are here.'},'was':{mn:'байсан',type:'verb',ex:'It was cold.'},'were':{mn:'байсан (олон тоо)',type:'verb'},'be':{mn:'байх',type:'verb'},'been':{mn:'байсан (perfect)',type:'verb'},
+  'have':{mn:'тэй, байна',type:'verb',ex:'I have a dog.'},'has':{mn:'байна (3р биед)',type:'verb'},'had':{mn:'байсан (өнгөрсөн)',type:'verb'},'having':{mn:'байхдаа',type:'verb'},
+  'do':{mn:'хийх',type:'verb'},'does':{mn:'хийнэ (3р биед)',type:'verb'},'did':{mn:'хийсэн',type:'verb'},'done':{mn:'хийсэн (perfect)',type:'verb'},
+  'go':{mn:'явах',type:'verb'},'goes':{mn:'явна',type:'verb'},'went':{mn:'явсан',type:'verb'},'gone':{mn:'явчихсан',type:'verb'},
+  'come':{mn:'ирэх',type:'verb'},'came':{mn:'ирсэн',type:'verb'},'coming':{mn:'ирж байна',type:'verb'},
+  'see':{mn:'харах, үзэх',type:'verb',ex:'I can see the stars.'},'saw':{mn:'харсан',type:'verb'},'seen':{mn:'харагдсан',type:'verb'},
+  'know':{mn:'мэдэх',type:'verb',ex:'I know the answer.'},'knew':{mn:'мэдэж байсан',type:'verb'},'known':{mn:'мэдэгдсэн',type:'verb'},
+  'think':{mn:'бодох, санах',type:'verb'},'thought':{mn:'бодсон',type:'verb'},'thinking':{mn:'бодож байна',type:'verb'},
+  'get':{mn:'авах, болох',type:'verb'},'got':{mn:'авсан',type:'verb'},'getting':{mn:'авч байна',type:'verb'},
+  'make':{mn:'хийх, бүтээх',type:'verb'},'made':{mn:'хийсэн',type:'verb'},'making':{mn:'хийж байна',type:'verb'},
+  'want':{mn:'хүсэх',type:'verb'},'wanted':{mn:'хүссэн',type:'verb'},'wanting':{mn:'хүсч байна',type:'verb'},
+  'use':{mn:'ашиглах',type:'verb'},'used':{mn:'ашигласан',type:'verb'},'using':{mn:'ашиглаж байна',type:'verb'},
+  'say':{mn:'хэлэх',type:'verb'},'said':{mn:'хэлсэн',type:'verb'},'saying':{mn:'хэлж байна',type:'verb'},
+  'take':{mn:'авах',type:'verb'},'took':{mn:'авсан',type:'verb'},'taken':{mn:'авагдсан',type:'verb'},'taking':{mn:'авч байна',type:'verb'},
+  'give':{mn:'өгөх',type:'verb'},'gave':{mn:'өгсөн',type:'verb'},'given':{mn:'өгсөн (perfect)',type:'verb'},
+  'find':{mn:'олох',type:'verb'},'found':{mn:'олсон',type:'verb'},'finding':{mn:'хайж байна',type:'verb'},
+  'tell':{mn:'хэлэх, ярих',type:'verb'},'told':{mn:'хэлсэн',type:'verb'},
+  'ask':{mn:'асуух',type:'verb'},'asked':{mn:'асуусан',type:'verb'},
+  'look':{mn:'харах, хайх',type:'verb',ex:'look at this'},'looked':{mn:'харсан',type:'verb'},'looking':{mn:'харж байна',type:'verb'},
+  'move':{mn:'хөдлөх, зөөх',type:'verb'},'moved':{mn:'зөөсөн',type:'verb'},
+  'live':{mn:'амьдрах',type:'verb'},'lived':{mn:'амьдарсан',type:'verb'},'living':{mn:'амьдарч байна',type:'verb'},
+  'feel':{mn:'мэдрэх, санах',type:'verb'},'felt':{mn:'мэдэрсэн',type:'verb'},
+  'leave':{mn:'явах, орхих',type:'verb'},'left':{mn:'орхисон',type:'verb'},
+  'show':{mn:'харуулах',type:'verb'},'showed':{mn:'харуулсан',type:'verb'},'showing':{mn:'харуулж байна',type:'verb'},
+  'become':{mn:'болох',type:'verb'},'became':{mn:'болсон',type:'verb'},
+  'happen':{mn:'болох (үйл явдал)',type:'verb'},'happened':{mn:'болсон',type:'verb'},
+  'seem':{mn:'мэт санагдах',type:'verb'},'seemed':{mn:'санагдсан',type:'verb'},
+  'mean':{mn:'гэсэн үг, санаа',type:'verb',ex:'what does it mean?'},'meant':{mn:'гэсэн санаа байсан',type:'verb'},
+  'start':{mn:'эхлэх',type:'verb'},'started':{mn:'эхэлсэн',type:'verb'},'starting':{mn:'эхэлж байна',type:'verb'},
+  'stop':{mn:'зогсох, болих',type:'verb'},'stopped':{mn:'зогссон',type:'verb'},
+  'change':{mn:'өөрчлөх',type:'verb'},'changed':{mn:'өөрчлөгдсөн',type:'verb'},
+  'grow':{mn:'өсөх, ургах',type:'verb'},'grew':{mn:'өссөн',type:'verb'},'grown':{mn:'өссөн (perfect)',type:'verb'},
+  'play':{mn:'тоглох',type:'verb'},'played':{mn:'тогложсон',type:'verb'},'playing':{mn:'тоглож байна',type:'verb'},
+  'run':{mn:'гүйх',type:'verb'},'ran':{mn:'гүйсэн',type:'verb'},'running':{mn:'гүйж байна',type:'verb'},
+  'walk':{mn:'явах (алхах)',type:'verb'},'walked':{mn:'алхсан',type:'verb'},'walking':{mn:'алхаж байна',type:'verb'},
+  'sleep':{mn:'унтах',type:'verb'},'slept':{mn:'унтсан',type:'verb'},
+  'eat':{mn:'идэх',type:'verb'},'ate':{mn:'идсэн',type:'verb'},'eating':{mn:'идэж байна',type:'verb'},
+  'drink':{mn:'уух',type:'verb'},'drank':{mn:'уусан',type:'verb'},
+  'help':{mn:'тусалга, тусалх',type:'verb'},'helped':{mn:'тусалсан',type:'verb'},'helping':{mn:'тусалж байна',type:'verb'},
+  'learn':{mn:'суралцах',type:'verb'},'learned':{mn:'суралцсан',type:'verb'},'learning':{mn:'суралцаж байна',type:'verb'},
+  'study':{mn:'судлах, суралцах',type:'verb'},'studied':{mn:'судалсан',type:'verb'},
+  'read':{mn:'унших',type:'verb'},'reading':{mn:'уншиж байна',type:'verb'},
+  'write':{mn:'бичих',type:'verb'},'wrote':{mn:'бичсэн',type:'verb'},'writing':{mn:'бичиж байна',type:'verb'},
+  'speak':{mn:'ярих',type:'verb'},'spoke':{mn:'ярьсан',type:'verb'},'speaking':{mn:'ярьж байна',type:'verb'},
+  'listen':{mn:'сонсох',type:'verb'},'listened':{mn:'сонссон',type:'verb'},
+  'understand':{mn:'ойлгох',type:'verb'},'understood':{mn:'ойлгосон',type:'verb'},
+  'remember':{mn:'санах, тогтоох',type:'verb'},'remembered':{mn:'санасан',type:'verb'},
+  'forget':{mn:'мартах',type:'verb'},'forgot':{mn:'мартсан',type:'verb'},
+  'believe':{mn:'итгэх',type:'verb'},'believed':{mn:'итгэсэн',type:'verb'},
+  'create':{mn:'бүтээх',type:'verb'},'created':{mn:'бүтээсэн',type:'verb'},
+  'build':{mn:'барих, бүтээх',type:'verb'},'built':{mn:'барьсан',type:'verb'},
+  'protect':{mn:'хамгаалах',type:'verb'},'protected':{mn:'хамгаалсан',type:'verb'},
+  'affect':{mn:'нөлөөлөх',type:'verb'},'affected':{mn:'нөлөөлсөн',type:'verb'},
+  'spread':{mn:'тархах',type:'verb'},'spreading':{mn:'тарч байна',type:'verb'},
+  'connect':{mn:'холбох',type:'verb'},'connected':{mn:'холбогдсон',type:'verb'},
+  'support':{mn:'дэмжих',type:'verb'},'supported':{mn:'дэмжсэн',type:'verb'},
+  'improve':{mn:'сайжруулах',type:'verb'},'improved':{mn:'сайжирсан',type:'verb'},
+  'contain':{mn:'агуулах',type:'verb'},'contains':{mn:'агуулдаг',type:'verb'},
+  'describe':{mn:'тайлбарлах',type:'verb'},'described':{mn:'тайлбарласан',type:'verb'},
+  'explain':{mn:'тайлбарлах',type:'verb'},'explained':{mn:'тайлбарласан',type:'verb'},
+  'discover':{mn:'нээх, олж мэдэх',type:'verb'},'discovered':{mn:'нээсэн',type:'verb'},
+  'explore':{mn:'судлах',type:'verb'},'exploring':{mn:'судалж байна',type:'verb'},
+  'exist':{mn:'оршин байх',type:'verb'},'existed':{mn:'оршин байсан',type:'verb'},
+  'occur':{mn:'болох, тохиолдох',type:'verb'},'occurred':{mn:'тохиолдсон',type:'verb'},
+  'appear':{mn:'гарч ирэх',type:'verb'},'appeared':{mn:'гарч ирсэн',type:'verb'},
+  'remain':{mn:'үлдэх',type:'verb'},'remained':{mn:'үлдсэн',type:'verb'},
+  'involve':{mn:'холбоотой байх',type:'verb'},'involved':{mn:'холбоотой байсан',type:'verb'},
+  'focus':{mn:'анхаарлаа төвлөрүүлэх',type:'verb'},'focused':{mn:'төвлөрсөн',type:'verb'},
+  'breathe':{mn:'амьсгалах',type:'verb'},'breathes':{mn:'амьсгалдаг',type:'verb'},
+  'communicate':{mn:'харилцах',type:'verb'},'communicates':{mn:'харилцдаг',type:'verb'},
+  'reduce':{mn:'бууруулах',type:'verb'},'reduced':{mn:'бууруулсан',type:'verb'},
+  'reach':{mn:'хүрэх',type:'verb'},'reached':{mn:'хүрсэн',type:'verb'},
+  'try':{mn:'оролдох',type:'verb'},'tried':{mn:'оролдсон',type:'verb'},'trying':{mn:'оролдож байна',type:'verb'},
+  'need':{mn:'хэрэгтэй',type:'verb'},'needed':{mn:'хэрэгтэй байсан',type:'verb'},
+  'love':{mn:'хайрлах',type:'verb'},'loved':{mn:'хайрласан',type:'verb'},
+  'like':{mn:'дурлах, таашаах',type:'verb'},'liked':{mn:'таашаасан',type:'verb'},
+  'open':{mn:'нээх',type:'verb'},'opened':{mn:'нээсэн',type:'verb'},'opens':{mn:'нээнэ',type:'verb'},
+  'close':{mn:'хаах',type:'verb'},'closed':{mn:'хаасан',type:'verb'},
+  'follow':{mn:'дагах',type:'verb'},'followed':{mn:'дагасан',type:'verb'},'following':{mn:'дагаж байна',type:'verb'},
+  'bring':{mn:'авчрах',type:'verb'},'brought':{mn:'авчирсан',type:'verb'},
+  'hold':{mn:'барих, барих',type:'verb'},'held':{mn:'барьсан',type:'verb'},
+  'turn':{mn:'эргэх, болгох',type:'verb'},'turned':{mn:'эргэсэн',type:'verb'},
+  'keep':{mn:'хадгалах, үргэлжлүүлэх',type:'verb'},'kept':{mn:'хадгалсан',type:'verb'},
+  'put':{mn:'тавих, хийх',type:'verb'},'putting':{mn:'тавьж байна',type:'verb'},
+  'set':{mn:'тавих, тохируулах',type:'verb'},'setting':{mn:'тохируулж байна',type:'verb'},
+  'send':{mn:'илгээх',type:'verb'},'sent':{mn:'илгээсэн',type:'verb'},
+  'meet':{mn:'уулзах',type:'verb'},'met':{mn:'уулзсан',type:'verb'},
+  'pay':{mn:'төлөх',type:'verb'},'paid':{mn:'төлсөн',type:'verb'},
+  'produce':{mn:'үйлдвэрлэх',type:'verb'},'produced':{mn:'үйлдвэрлэсэн',type:'verb'},
+  'include':{mn:'багтаах',type:'verb'},'included':{mn:'багтаасан',type:'verb'},
+  'provide':{mn:'өгөх, хангах',type:'verb'},'provided':{mn:'хангасан',type:'verb'},
+  'consider':{mn:'бодох, үзэх',type:'verb'},'considered':{mn:'бодсон',type:'verb'},
+  'allow':{mn:'зөвшөөрөх',type:'verb'},'allowed':{mn:'зөвшөөрсөн',type:'verb'},
+  'develop':{mn:'хөгжүүлэх',type:'verb'},'developed':{mn:'хөгжүүлсэн',type:'verb'},
+  'spend':{mn:'зарах, өнгөрүүлэх',type:'verb'},'spent':{mn:'зарсан',type:'verb'},'spending':{mn:'зарж байна',type:'verb'},
+  'call':{mn:'дуудах, утасдах',type:'verb'},'called':{mn:'дуудсан',type:'verb'},
+  'check':{mn:'шалгах',type:'verb'},'checked':{mn:'шалгасан',type:'verb'},'checking':{mn:'шалгаж байна',type:'verb'},
+  'wait':{mn:'хүлээх',type:'verb'},'waited':{mn:'хүлээсэн',type:'verb'},'waiting':{mn:'хүлээж байна',type:'verb'},
+  'carry':{mn:'зөөх, авч явах',type:'verb'},'carries':{mn:'авч явдаг',type:'verb'},
+  'pass':{mn:'дамжих, өгөх',type:'verb'},'passed':{mn:'өгсөн',type:'verb'},
+  'break':{mn:'хугалах, завсарлах',type:'verb'},'broke':{mn:'хугалсан',type:'verb'},'breaks':{mn:'хугардаг',type:'verb'},
+  'cause':{mn:'үүсгэх, шалтгаан болох',type:'verb'},'caused':{mn:'үүсгэсэн',type:'verb'},
+  'lose':{mn:'алдах, хожигдох',type:'verb'},'lost':{mn:'алдсан',type:'verb'},
+  'win':{mn:'ялах',type:'verb'},'won':{mn:'ялсан',type:'verb'},
+  'fall':{mn:'унах, намар',type:'verb'},'fell':{mn:'унасан',type:'verb'},
+  'rise':{mn:'өсөх, мандах',type:'verb'},'rose':{mn:'өссөн',type:'verb'},'risen':{mn:'өссөн (perfect)',type:'verb'},
+  'add':{mn:'нэмэх',type:'verb'},'added':{mn:'нэмсэн',type:'verb'},
+  'cut':{mn:'огтлох',type:'verb'},'cutting':{mn:'огтолж байна',type:'verb'},
+  'push':{mn:'түлхэх',type:'verb'},'push':{mn:'түлхэх',type:'verb'},
+  'pull':{mn:'татах',type:'verb'},'pulled':{mn:'татсан',type:'verb'},
+  'cover':{mn:'бүрхэх, хамрах',type:'verb'},'covered':{mn:'бүрхсэн',type:'verb'},'covering':{mn:'бүрхэж байна',type:'verb'},
+  'hit':{mn:'цохих',type:'verb'},'hitting':{mn:'цохиж байна',type:'verb'},
+  'enter':{mn:'орох',type:'verb'},'entered':{mn:'орсон',type:'verb'},
+  'return':{mn:'буцах, буцааах',type:'verb'},'returned':{mn:'буцсан',type:'verb'},
+  'share':{mn:'хуваалцах',type:'verb'},'shared':{mn:'хуваалцсан',type:'verb'},
+  'choose':{mn:'сонгох',type:'verb'},'chose':{mn:'сонгосон',type:'verb'},
+  'decide':{mn:'шийдэх',type:'verb'},'decided':{mn:'шийдсэн',type:'verb'},
+  'raise':{mn:'өргөх, дээшлүүлэх',type:'verb'},'raised':{mn:'дээшлүүлсэн',type:'verb'},
+  'kill':{mn:'алах',type:'verb'},'killed':{mn:'алсан',type:'verb'},
+  'eat':{mn:'идэх',type:'verb'},
+  'swim':{mn:'сэлэх',type:'verb'},'swimming':{mn:'сэлж байна',type:'verb'},
+  'fly':{mn:'нисэх',type:'verb'},'flew':{mn:'нисэн',type:'verb'},'flying':{mn:'нисч байна',type:'verb'},
+  'jump':{mn:'үсрэх',type:'verb'},'jumped':{mn:'үсэрсэн',type:'verb'},
+  'sing':{mn:'дуулах',type:'verb'},'sang':{mn:'дуулсан',type:'verb'},'singing':{mn:'дуулж байна',type:'verb'},
+  'dance':{mn:'бүжиглэх',type:'verb'},'dancing':{mn:'бүжиглэж байна',type:'verb'},
+  'cook':{mn:'хоол хийх',type:'verb'},'cooked':{mn:'хоол хийсэн',type:'verb'},
+  'clean':{mn:'цэвэрлэх',type:'verb'},'cleaned':{mn:'цэвэрлэсэн',type:'verb'},
+  'buy':{mn:'худалдаж авах',type:'verb'},'bought':{mn:'худалдаж авсан',type:'verb'},
+  'sell':{mn:'зарах',type:'verb'},'sold':{mn:'зарсан',type:'verb'},
+  'travel':{mn:'аялах',type:'verb'},'traveled':{mn:'аялсан',type:'verb'},'travelling':{mn:'аялж байна',type:'verb'},
+  'save':{mn:'хадгалах, аврах',type:'verb'},'saved':{mn:'хадгалсан',type:'verb'},
+  'work':{mn:'ажиллах',type:'verb'},'worked':{mn:'ажиллассан',type:'verb'},'working':{mn:'ажиллаж байна',type:'verb'},
+  'can':{mn:'чадах',type:'modal',ex:'I can swim.'},'cannot':{mn:'чадахгүй',type:'modal'},"can't":{mn:'чадахгүй',type:'modal'},
+  'will':{mn:'болно (ирээдүй)',type:'modal'},'would':{mn:'болох байсан',type:'modal'},'could':{mn:'чадах байсан',type:'modal'},
+  'should':{mn:'ёстой',type:'modal'},'must':{mn:'заавал ёстой',type:'modal'},'may':{mn:'магадгүй, болж ч мэднэ',type:'modal'},
+  'might':{mn:'байж магадгүй',type:'modal'},'shall':{mn:'болно (нийтийн)',type:'modal'},
+  'in':{mn:'дотор, -д/-т',type:'prep',ex:'in the box'},'on':{mn:'дээр',type:'prep',ex:'on the table'},
+  'at':{mn:'-д/-т (цаг, газар)',type:'prep'},'to':{mn:'руу, рүү, -д',type:'prep'},'from':{mn:'-аас/-ээс',type:'prep'},
+  'with':{mn:'-тай/-тэй',type:'prep'},'for':{mn:'-ийн тулд, -д',type:'prep'},'about':{mn:'тухай',type:'prep'},
+  'between':{mn:'хооронд',type:'prep'},'through':{mn:'дамжин, дотуур',type:'prep'},'during':{mn:'үед',type:'prep'},
+  'before':{mn:'өмнө',type:'prep'},'after':{mn:'дараа',type:'prep'},'without':{mn:'-гүйгээр',type:'prep'},
+  'under':{mn:'доор, дор',type:'prep'},'over':{mn:'дээр, дээгүүр',type:'prep'},'around':{mn:'эргэн тойрон',type:'prep'},
+  'near':{mn:'ойрхон',type:'prep'},'behind':{mn:'хойно',type:'prep'},'above':{mn:'дээд талд',type:'prep'},
+  'below':{mn:'доод талд',type:'prep'},'into':{mn:'дотогш',type:'prep'},'onto':{mn:'дэл тавих',type:'prep'},
+  'off':{mn:'-аас хол, унтарсан',type:'prep'},'up':{mn:'дээш',type:'prep'},'down':{mn:'доош',type:'prep'},
+  'out':{mn:'гадагш',type:'prep'},'away':{mn:'хол, зайд',type:'adv'},
+  'but':{mn:'гэхдээ, харин',type:'conj'},'and':{mn:'болон, ба',type:'conj'},'or':{mn:'эсвэл',type:'conj'},
+  'because':{mn:'учраас, тул',type:'conj'},'if':{mn:'хэрэв',type:'conj'},'when':{mn:'хэзээ, үед',type:'conj'},
+  'that':{mn:'тэр, гэж',type:'conj'},'however':{mn:'гэсэн хэдий ч',type:'conj'},'therefore':{mn:'тиймээс',type:'conj'},
+  'although':{mn:'гэвч, хэдий ч',type:'conj'},'while':{mn:'байхад, харин',type:'conj'},'since':{mn:'учраас, -аас хойш',type:'conj'},
+  'so':{mn:'тиймэрхүү, тиймээс',type:'conj'},'yet':{mn:'гэвч, одоогоор',type:'conj'},
+  'unless':{mn:'хэрэв ... биш бол',type:'conj'},'whether':{mn:'эсэх',type:'conj'},
+  'this':{mn:'энэ',type:'pronoun'},'these':{mn:'эдгээр',type:'pronoun'},'those':{mn:'тэдгээр',type:'pronoun'},
+  'which':{mn:'аль',type:'pronoun'},'who':{mn:'хэн',type:'pronoun'},'what':{mn:'юу',type:'pronoun'},
+  'he':{mn:'тэр (эрэгтэй)',type:'pronoun'},'she':{mn:'тэр (эмэгтэй)',type:'pronoun'},'they':{mn:'тэд',type:'pronoun'},
+  'we':{mn:'бид',type:'pronoun'},'i':{mn:'би',type:'pronoun'},'it':{mn:'энэ, тэр (юм)',type:'pronoun'},
+  'you':{mn:'та, чи',type:'pronoun'},'me':{mn:'намайг, надад',type:'pronoun'},'him':{mn:'түүнийг (эр)',type:'pronoun'},
+  'her':{mn:'түүнийг (эм)',type:'pronoun'},'them':{mn:'тэднийг',type:'pronoun'},'us':{mn:'биднийг',type:'pronoun'},
+  'my':{mn:'миний',type:'pronoun'},'your':{mn:'таны, чиний',type:'pronoun'},'his':{mn:'түүний (эр)',type:'pronoun'},
+  'its':{mn:'түүний (юмны)',type:'pronoun'},'our':{mn:'маний',type:'pronoun'},'their':{mn:'тэдний',type:'pronoun'},
+  'myself':{mn:'өөрөө (ганц)',type:'pronoun'},'himself':{mn:'өөрөө (эр)',type:'pronoun'},
+  'how':{mn:'яаж',type:'adv'},'why':{mn:'яагаад',type:'adv'},'where':{mn:'хаана',type:'adv'},
+  'very':{mn:'маш, үлэмж',type:'adv'},'also':{mn:'мөн, бас',type:'adv'},'just':{mn:'яг, зөвхөн',type:'adv'},
+  'still':{mn:'одоо ч, байсаар',type:'adv'},'now':{mn:'одоо',type:'adv'},'then':{mn:'дараа нь, тэгвэл',type:'adv'},
+  'here':{mn:'энд',type:'adv'},'there':{mn:'тэнд',type:'adv'},'always':{mn:'үргэлж',type:'adv'},
+  'never':{mn:'хэзээ ч ... үгүй',type:'adv'},'often':{mn:'олонтаа, байнга',type:'adv'},
+  'sometimes':{mn:'заримдаа',type:'adv'},'usually':{mn:'ихэвчлэн',type:'adv'},
+  'especially':{mn:'ялангуяа',type:'adv'},'recently':{mn:'саяхан',type:'adv'},
+  'already':{mn:'аль хэдийн',type:'adv'},'finally':{mn:'эцэст нь',type:'adv'},
+  'together':{mn:'хамт',type:'adv'},'quickly':{mn:'хурдан',type:'adv'},'slowly':{mn:'удаан',type:'adv'},
+  'enough':{mn:'хангалттай',type:'adv'},'instead':{mn:'оронд нь',type:'adv'},
+  'well':{mn:'сайн, сайхан',type:'adv'},'really':{mn:'үнэхээр',type:'adv'},'quite':{mn:'нэлээд',type:'adv'},
+  'rather':{mn:'харин ч, нэлээд',type:'adv'},'too':{mn:'хэт, мөн',type:'adv'},'even':{mn:'ч гэсэн, жигд',type:'adv'},
+  'only':{mn:'зөвхөн',type:'adv'},'already':{mn:'аль хэдийн',type:'adv'},'again':{mn:'дахин',type:'adv'},
+  'back':{mn:'буцаж, хойш',type:'adv'},'together':{mn:'хамт',type:'adv'},
+  'good':{mn:'сайн',type:'adj'},'great':{mn:'гайхалтай, том',type:'adj'},'big':{mn:'том',type:'adj'},
+  'small':{mn:'жижиг',type:'adj'},'long':{mn:'урт',type:'adj'},'new':{mn:'шинэ',type:'adj'},
+  'old':{mn:'хуучин, настай',type:'adj'},'first':{mn:'эхний, нэгдүгээр',type:'adj'},
+  'last':{mn:'сүүлийн, өнгөрсөн',type:'adj'},'many':{mn:'олон',type:'adj'},'much':{mn:'их, маш их',type:'adj'},
+  'some':{mn:'деэяк, хэдэн',type:'adj'},'other':{mn:'бусад, өөр',type:'adj'},
+  'important':{mn:'чухал',type:'adj'},'different':{mn:'өөр, ялгаатай',type:'adj'},
+  'large':{mn:'том, өргөн',type:'adj'},'high':{mn:'өндөр',type:'adj'},'young':{mn:'залуу',type:'adj'},
+  'early':{mn:'эрт',type:'adj'},'hard':{mn:'хэцүү, хатуу',type:'adj'},'free':{mn:'чөлөөт, үнэгүй',type:'adj'},
+  'real':{mn:'жинхэнэ, бодит',type:'adj'},'possible':{mn:'боломжтой',type:'adj'},'able':{mn:'чадвартай',type:'adj'},
+  'ready':{mn:'бэлэн',type:'adj'},'sure':{mn:'итгэлтэй',type:'adj'},'clear':{mn:'тод, ойлгомжтой',type:'adj'},
+  'natural':{mn:'байгалийн, жирийн',type:'adj'},'special':{mn:'онцгой, тусгай',type:'adj'},
+  'similar':{mn:'ижил, адилхан',type:'adj'},'common':{mn:'нийтлэг, энгийн',type:'adj'},
+  'difficult':{mn:'хэцүү',type:'adj'},'easy':{mn:'хялбар',type:'adj'},'beautiful':{mn:'гоё, үзэсгэлэнтэй',type:'adj'},
+  'strong':{mn:'хүчтэй',type:'adj'},'simple':{mn:'энгийн',type:'adj'},'powerful':{mn:'хүчтэй, чадвартай',type:'adj'},
+  'hot':{mn:'халуун',type:'adj'},'cold':{mn:'хүйтэн',type:'adj'},'fast':{mn:'хурдан',type:'adj'},
+  'slow':{mn:'удаан',type:'adj'},'deep':{mn:'гүн',type:'adj'},'dark':{mn:'харанхуй',type:'adj'},
+  'bright':{mn:'гэрэлтэй, ухаалаг',type:'adj'},'heavy':{mn:'хүнд',type:'adj'},'light':{mn:'хөнгөн, гэрэл',type:'adj'},
+  'short':{mn:'богино',type:'adj'},'wide':{mn:'өргөн',type:'adj'},'narrow':{mn:'нарийн',type:'adj'},
+  'soft':{mn:'зөөлөн',type:'adj'},'rough':{mn:'хэрзгэр, зэрлэг',type:'adj'},'sweet':{mn:'амттай, чихэрлэг',type:'adj'},
+  'fresh':{mn:'шинэхэн, цэвэр',type:'adj'},'warm':{mn:'дулаан',type:'adj'},'cool':{mn:'сэрүүн',type:'adj'},
+  'safe':{mn:'аюулгүй',type:'adj'},'dangerous':{mn:'аюултай',type:'adj'},'rare':{mn:'ховор',type:'adj'},
+  'wild':{mn:'зэрлэг',type:'adj'},'local':{mn:'орон нутгийн',type:'adj'},'global':{mn:'дэлхий нийтийн',type:'adj'},
+  'modern':{mn:'орчин үеийн',type:'adj'},'ancient':{mn:'эртний',type:'adj'},'traditional':{mn:'уламжлалт',type:'adj'},
+  'intelligent':{mn:'оюунлаг, ухаалаг',type:'adj'},'smart':{mn:'ухаалаг',type:'adj'},'clever':{mn:'ухаалаг, авхаалжтай',type:'adj'},
+  'happy':{mn:'баяртай',type:'adj'},'sad':{mn:'гунигтай',type:'adj'},'angry':{mn:'уурласан',type:'adj'},
+  'tired':{mn:'ядарсан',type:'adj'},'sick':{mn:'өвдсөн',type:'adj'},'healthy':{mn:'эрүүл',type:'adj'},
+  'alive':{mn:'амьд',type:'adj'},'dead':{mn:'нас барсан',type:'adj'},'lost':{mn:'алдагдсан',type:'adj'},
+  'right':{mn:'зөв, баруун',type:'adj'},'wrong':{mn:'буруу',type:'adj'},'true':{mn:'үнэн',type:'adj'},
+  'false':{mn:'худал',type:'adj'},'full':{mn:'дүүрэн',type:'adj'},'empty':{mn:'хоосон',type:'adj'},
+  'people':{mn:'хүмүүс',type:'noun'},'world':{mn:'дэлхий',type:'noun'},'life':{mn:'амьдрал',type:'noun'},
+  'time':{mn:'цаг, хугацаа',type:'noun'},'year':{mn:'жил',type:'noun'},'day':{mn:'өдөр',type:'noun'},
+  'way':{mn:'арга, зам',type:'noun'},'place':{mn:'газар, байршил',type:'noun'},
+  'water':{mn:'ус',type:'noun'},'food':{mn:'хоол',type:'noun'},'school':{mn:'сургууль',type:'noun'},
+  'home':{mn:'гэр',type:'noun'},'city':{mn:'хот',type:'noun'},'country':{mn:'орон, улс',type:'noun'},
+  'book':{mn:'ном',type:'noun'},'hand':{mn:'гар',type:'noun'},'body':{mn:'бие',type:'noun'},
+  'eye':{mn:'нүд',type:'noun'},'mind':{mn:'оюун ухаан, сэтгэл',type:'noun'},'idea':{mn:'санаа',type:'noun'},
+  'problem':{mn:'асуудал',type:'noun'},'part':{mn:'хэсэг',type:'noun'},'thing':{mn:'юм, зүйл',type:'noun'},
+  'fact':{mn:'баримт, үнэн',type:'noun'},'number':{mn:'тоо, дугаар',type:'noun'},
+  'question':{mn:'асуулт',type:'noun'},'answer':{mn:'хариулт',type:'noun'},'language':{mn:'хэл',type:'noun'},
+  'story':{mn:'түүх, өгүүллэг',type:'noun'},'word':{mn:'үг',type:'noun'},'power':{mn:'хүч, эрх мэдэл',type:'noun'},
+  'process':{mn:'үйл явц',type:'noun'},'result':{mn:'үр дүн',type:'noun'},'reason':{mn:'шалтгаан',type:'noun'},
+  'effect':{mn:'нөлөө',type:'noun'},'level':{mn:'түвшин',type:'noun'},'type':{mn:'төрөл',type:'noun'},
+  'form':{mn:'хэлбэр',type:'noun'},'surface':{mn:'гадаргуу',type:'noun'},'space':{mn:'сансар',type:'noun'},
+  'planet':{mn:'гараг',type:'noun'},'fish':{mn:'загас',type:'noun'},'bird':{mn:'шувуу',type:'noun'},
+  'sunlight':{mn:'нарны гэрэл',type:'noun'},'atmosphere':{mn:'агаар мандал',type:'noun'},
+  'molecule':{mn:'молекул',type:'noun'},'scattered':{mn:'тархсан',type:'adj'},
+  'direction':{mn:'чиглэл',type:'noun'},'sunset':{mn:'нарны жаргалт',type:'noun'},
+  'routine':{mn:'өдөр тутмын дэглэм',type:'noun'},'bathroom':{mn:'угаалгын өрөө',type:'noun'},
+  'breakfast':{mn:'өглөөний хоол',type:'noun'},'messages':{mn:'мессежүүд',type:'noun'},
+  'tonnes':{mn:'тонн',type:'noun'},'pollution':{mn:'бохирдол',type:'noun'},
+  'microplastics':{mn:'бичил хуванцар',type:'noun'},'particles':{mn:'жижиг хэсгүүд',type:'noun'},
+  'everyday':{mn:'өдөр тутмын',type:'adj'},'directions':{mn:'зам заавар',type:'noun'},
+  'pocket':{mn:'халаас',type:'noun'},'experts':{mn:'мэргэжилтнүүд',type:'noun'},
+  'whistles':{mn:'исгэрэлт',type:'noun'},'behavior':{mn:'зан авир',type:'noun'},
+  'searching':{mn:'хайж байгаа',type:'verb'},'horse':{mn:'морь',type:'noun'},
+  'ocean':{mn:'далай',type:'noun'},'sea':{mn:'тэнгис',type:'noun'},'air':{mn:'агаар',type:'noun'},
+  'sky':{mn:'тэнгэр',type:'noun'},'sun':{mn:'нар',type:'noun'},'rain':{mn:'бороо',type:'noun'},
+  'snow':{mn:'цас',type:'noun'},'animal':{mn:'амьтан',type:'noun'},'plant':{mn:'ургамал',type:'noun'},
+  'mountain':{mn:'уул',type:'noun'},'river':{mn:'гол',type:'noun'},'tree':{mn:'мод',type:'noun'},
+  'forest':{mn:'ой',type:'noun'},'ground':{mn:'газар',type:'noun'},'earth':{mn:'дэлхий, газар',type:'noun'},
+  'human':{mn:'хүн, хүний',type:'noun'},'child':{mn:'хүүхэд',type:'noun'},'family':{mn:'гэр бүл',type:'noun'},
+  'friend':{mn:'найз',type:'noun'},'technology':{mn:'технологи',type:'noun'},'science':{mn:'шинжлэх ухаан',type:'noun'},
+  'history':{mn:'түүх',type:'noun'},'nature':{mn:'байгаль',type:'noun'},'environment':{mn:'орчин',type:'noun'},
+  'health':{mn:'эрүүл мэнд',type:'noun'},'education':{mn:'боловсрол',type:'noun'},
+  'information':{mn:'мэдээлэл',type:'noun'},'internet':{mn:'интернэт',type:'noun'},
+  'computer':{mn:'компьютер',type:'noun'},'phone':{mn:'утас',type:'noun'},
+  'music':{mn:'хөгжим',type:'noun'},'art':{mn:'урлаг',type:'noun'},'sport':{mn:'спорт',type:'noun'},
+  'game':{mn:'тоглоом',type:'noun'},'team':{mn:'баг',type:'noun'},'class':{mn:'анги, хичээл',type:'noun'},
+  'city':{mn:'хот',type:'noun'},'street':{mn:'гудамж',type:'noun'},'house':{mn:'байшин',type:'noun'},
+  'door':{mn:'хаалга',type:'noun'},'window':{mn:'цонх',type:'noun'},'room':{mn:'өрөө',type:'noun'},
+  'floor':{mn:'шал, давхар',type:'noun'},'wall':{mn:'хана',type:'noun'},'table':{mn:'ширээ',type:'noun'},
+  'chair':{mn:'сандал',type:'noun'},'bed':{mn:'ор',type:'noun'},'car':{mn:'машин',type:'noun'},
+  'road':{mn:'зам',type:'noun'},'bridge':{mn:'гүүр',type:'noun'},'ship':{mn:'хөлөг онгоц',type:'noun'},
+  'train':{mn:'галт тэрэг',type:'noun'},'bus':{mn:'автобус',type:'noun'},'plane':{mn:'онгоц',type:'noun'},
+  'money':{mn:'мөнгө',type:'noun'},'price':{mn:'үнэ',type:'noun'},'job':{mn:'ажил',type:'noun'},
+  'office':{mn:'оффис',type:'noun'},'government':{mn:'засгийн газар',type:'noun'},
+  'law':{mn:'хууль',type:'noun'},'war':{mn:'дайн',type:'noun'},'peace':{mn:'энх тайван',type:'noun'},
+  'news':{mn:'мэдээ',type:'noun'},'report':{mn:'тайлан',type:'noun'},'study':{mn:'судалгаа',type:'noun'},
+  'research':{mn:'судалгаа',type:'noun'},'energy':{mn:'эрчим хүч',type:'noun'},'heat':{mn:'халуун',type:'noun'},
+  'fire':{mn:'гал',type:'noun'},'ice':{mn:'мөс',type:'noun'},'cloud':{mn:'үүл',type:'noun'},
+  'wind':{mn:'салхи',type:'noun'},'storm':{mn:'шуурга',type:'noun'},'temperature':{mn:'температур',type:'noun'},
+  'blood':{mn:'цус',type:'noun'},'brain':{mn:'тархи',type:'noun'},'heart':{mn:'зүрх',type:'noun'},
+  'nose':{mn:'хамар',type:'noun'},'mouth':{mn:'ам',type:'noun'},'ear':{mn:'чих',type:'noun'},
+  'feet':{mn:'хөл (олон тоо)',type:'noun'},'foot':{mn:'хөл (нэг)',type:'noun'},'leg':{mn:'гуя',type:'noun'},
+  'arm':{mn:'гар (мөр)',type:'noun'},'head':{mn:'толгой',type:'noun'},'face':{mn:'царай',type:'noun'},
+  'hair':{mn:'үс',type:'noun'},'skin':{mn:'арьс',type:'noun'},'bone':{mn:'яс',type:'noun'},
+  'stomach':{mn:'хэвлий',type:'noun'},'sponges':{mn:'хөвөнгүүд',type:'noun'},
+  'seabirds':{mn:'тэнгисийн шувуунууд',type:'noun'},'stomachs':{mn:'хэвлийнүүд',type:'noun'},
+  'death':{mn:'үхэл',type:'noun'},'plastic':{mn:'хуванцар',type:'noun'},
+  'rivers':{mn:'голууд',type:'noun'},'beaches':{mn:'эрэгнүүд',type:'noun'},'ships':{mn:'хөлгүүд',type:'noun'},
+  'mistake':{mn:'алдаа',type:'noun'},'mistake':{mn:'буруу ойлгох',type:'verb'},'block':{mn:'хаах, тоосго',type:'verb'},
+  'banning':{mn:'хориглож байна',type:'verb'},'ban':{mn:'хориглох',type:'verb'},'banned':{mn:'хориглосон',type:'verb'},
+  'governments':{mn:'засгийн газрууд',type:'noun'},'single':{mn:'дангаар, нэгж',type:'adj'},
+  'items':{mn:'зүйлс',type:'noun'},'habit':{mn:'дадал, зуршил',type:'noun'},
+  'billions':{mn:'тэрбум',type:'noun'},'maps':{mn:'газрын зурагнууд',type:'noun'},
+  'photos':{mn:'зурагнууд',type:'noun'},'internet':{mn:'интернэт',type:'noun'},
+  'scientists':{mn:'эрдэмтэд',type:'noun'},'studies':{mn:'судалгаанууд',type:'noun'},
+  'clicks':{mn:'товших дуу',type:'noun'},'clicks':{mn:'товших дуу',type:'noun'},
+  'sponges':{mn:'хөвөн',type:'noun'},'floors':{mn:'шалнууд',type:'noun'},
+  'mothers':{mn:'ээжүүд',type:'noun'},'children':{mn:'хүүхдүүд',type:'noun'},
+  'teeth':{mn:'шүд (олон тоо)',type:'noun'},'shoes':{mn:'гутал',type:'noun'},
+  'kitchen':{mn:'гал тогоо',type:'noun'},'bread':{mn:'талх',type:'noun'},'tea':{mn:'цай',type:'noun'},
+  'cup':{mn:'аяга',type:'noun'},'stop':{mn:'буудал',type:'noun'},
+  'waves':{mn:'долгион',type:'noun'},'wave':{mn:'долгион',type:'noun'},
+  'colors':{mn:'өнгөнүүд',type:'noun'},'color':{mn:'өнгө',type:'noun'},'colour':{mn:'өнгө',type:'noun'},
+  'orange':{mn:'улбар шар',type:'adj'},'red':{mn:'улаан',type:'adj'},'blue':{mn:'цэнхэр',type:'adj'},
+  'green':{mn:'ногоон',type:'adj'},'white':{mn:'цагаан',type:'adj'},'black':{mn:'хар',type:'adj'},'yellow':{mn:'шар',type:'adj'},
+  'eyes':{mn:'нүднүүд',type:'noun'},'arms':{mn:'гарнууд',type:'noun'},'legs':{mn:'хөлнүүд',type:'noun'},
+  'minutes':{mn:'минутууд',type:'noun'},'minute':{mn:'минут',type:'noun'},'hour':{mn:'цаг',type:'noun'},
+  'clock':{mn:'цаг (тоног)',type:'noun'},'morning':{mn:'өглөө',type:'noun'},'afternoon':{mn:'өдрийн хагас',type:'noun'},
+  'evening':{mn:'орой',type:'noun'},'night':{mn:'шөнө',type:'noun'},'week':{mn:'долоо хоног',type:'noun'},
+  'month':{mn:'сар',type:'noun'},'century':{mn:'зуун жил',type:'noun'},'age':{mn:'нас, эрин',type:'noun'},
+  'both':{mn:'хоёул, аль аль',type:'adj'},'every':{mn:'бүр, бүх',type:'adj'},
+  'all':{mn:'бүгд, бүх',type:'adj'},'most':{mn:'ихэнх',type:'adj'},'more':{mn:'илүү, дахин',type:'adj'},
+  'less':{mn:'цөөн, бага',type:'adj'},'few':{mn:'цөөн',type:'adj'},'little':{mn:'бага',type:'adj'},
+  'several':{mn:'хэд хэдэн',type:'adj'},'each':{mn:'тус бүр',type:'adj'},'any':{mn:'аль ч',type:'adj'},
+  'no':{mn:'үгүй, байхгүй',type:'adj'},'not':{mn:'биш, үгүй',type:'adv'},
+  'same':{mn:'адилхан',type:'adj'},'own':{mn:'өөрийн',type:'adj'},'whole':{mn:'бүхэл',type:'adj'},
+  'half':{mn:'хагас',type:'adj'},'another':{mn:'өөр нэгэн',type:'adj'},
+  'future':{mn:'ирээдүй',type:'noun'},'past':{mn:'өнгөрсөн',type:'noun'},'present':{mn:'одоо цаг',type:'noun'},
+  'beginning':{mn:'эхлэл',type:'noun'},'end':{mn:'төгсгөл',type:'noun'},'middle':{mn:'дунд',type:'noun'},
+  'point':{mn:'цэг, байрлал',type:'noun'},'line':{mn:'шугам',type:'noun'},'side':{mn:'тал',type:'noun'},
+  'top':{mn:'дээд',type:'noun'},'bottom':{mn:'доод',type:'noun'},'center':{mn:'төв',type:'noun'},
+  'area':{mn:'талбай, бүс нутаг',type:'noun'},'region':{mn:'бүс нутаг',type:'noun'},
+  'species':{mn:'зүйл (биологи)',type:'noun'},'population':{mn:'хүн ам',type:'noun'},
+  'society':{mn:'нийгэм',type:'noun'},'culture':{mn:'соёл',type:'noun'},'economy':{mn:'эдийн засаг',type:'noun'},
+  'climate':{mn:'уур амьсгал',type:'noun'},'carbon':{mn:'нүүрстөрөгч',type:'noun'},
+  'oxygen':{mn:'хүчилтөрөгч',type:'noun'},'hydrogen':{mn:'устөрөгч',type:'noun'},
+  'gravity':{mn:'татах хүч',type:'noun'},'orbit':{mn:'тойрог зам',type:'noun'},
+  'universe':{mn:'орчлон ертөнц',type:'noun'},'galaxy':{mn:'галактик',type:'noun'},
+  'star':{mn:'од',type:'noun'},'moon':{mn:'сар',type:'noun'},'solar':{mn:'нарны',type:'adj'},
+  'electric':{mn:'цахилгаан',type:'adj'},'digital':{mn:'дижитал',type:'adj'},
+  'physical':{mn:'биеийн, физик',type:'adj'},'mental':{mn:'оюуны, сэтгэлийн',type:'adj'},
+  'social':{mn:'нийгмийн',type:'adj'},'political':{mn:'улс төрийн',type:'adj'},
+  'economic':{mn:'эдийн засгийн',type:'adj'},'scientific':{mn:'шинжлэх ухааны',type:'adj'},
+  'cultural':{mn:'соёлын',type:'adj'},'environmental':{mn:'байгаль орчны',type:'adj'},
+  'medical':{mn:'эмнэлгийн',type:'adj'},'chemical':{mn:'химийн',type:'adj'},
+  'biological':{mn:'биологийн',type:'adj'},'electrical':{mn:'цахилгааны',type:'adj'},
+  'mechanical':{mn:'механикийн',type:'adj'},'artificial':{mn:'хиймэл',type:'adj'},
+  'automatic':{mn:'автоматик',type:'adj'},'virtual':{mn:'виртуаль',type:'adj'},
+};
+
+// ==================== ARTICLES ====================
+const ARTICLES=[
+  {id:'a1',level:'A1',topic:'Animals',icon:'🐬',
+   title:'The Clever Dolphin',
+   text:'Dolphins are very intelligent animals. They live in the ocean and breathe air, just like humans. A dolphin\'s brain is large, and dolphins can learn new things quickly. They communicate with each other using clicks and whistles. Scientists believe that dolphins have their own language. Dolphins also play games and help each other when they are sick or hurt. Some dolphins have learned to use tools. For example, dolphins in Australia put sponges on their noses to protect them when searching for food on the ocean floor. This behavior is passed from mothers to their children.',
+   vocab:['intelligent','breathe','communicate','whistles','believe','protect','behavior','searching']},
+  {id:'a2',level:'A1',topic:'Daily Life',icon:'🌅',
+   title:'A Morning Routine',
+   text:'Every morning, Sara wakes up at seven o\'clock. She gets up and goes to the bathroom. First, she washes her face and brushes her teeth. Then she gets dressed and goes to the kitchen. She makes a cup of tea and eats some bread. After breakfast, she checks her phone for messages. At eight o\'clock, she puts on her shoes and leaves the house. She walks to the bus stop and waits for the bus. The bus comes at eight fifteen. Sara gets on the bus and goes to school.',
+   vocab:['routine','bathroom','breakfast','messages']},
+  {id:'a3',level:'A1',topic:'Nature',icon:'🌿',
+   title:'Trees Are Important',
+   text:'Trees are very important for all living things on earth. They give us clean air to breathe. Trees also give us food. Many animals live in trees. Birds make their homes in trees and eat the fruit and seeds. Trees help keep the earth cool. When it is hot, people sit under trees to rest. Trees also hold the ground together. Without trees, the rain takes the soil away. We must plant more trees and protect the ones we have. A world without trees is not a good world.',
+   vocab:['important','breathe','animals','protect','ground','rest']},
+  {id:'a4',level:'A2',topic:'Science',icon:'🌤️',
+   title:'Why the Sky is Blue',
+   text:'The sky looks blue because of the way sunlight travels through the air. Sunlight is made of many different colors. When sunlight enters the atmosphere, it hits tiny air molecules. Blue light has a short wave, so it bounces around more than other colors. This scattered blue light reaches our eyes from every direction. That is why we see a blue sky. At sunset, sunlight travels through more air. The blue light scatters away, and we see red and orange colors instead.',
+   vocab:['sunlight','atmosphere','molecule','scattered','direction','sunset','instead']},
+  {id:'a5',level:'A2',topic:'Technology',icon:'📱',
+   title:'How Smartphones Changed Our Lives',
+   text:'Smartphones are now part of everyday life for billions of people. These small computers can connect us to the internet, take photos, play music, and help us find directions. Before smartphones, people used maps to find their way. They waited at home for phone calls. Today, we carry a powerful computer in our pocket. However, some people worry about spending too much time on their phones. Studies show that young people check their phones more than one hundred times a day. Some experts say that this habit can make it harder to focus on important tasks.',
+   vocab:['everyday','connect','directions','powerful','pocket','experts','focus','habit']},
+  {id:'a6',level:'A2',topic:'Food',icon:'🍎',
+   title:'Eating Healthy Every Day',
+   text:'What we eat every day is very important for our health. Doctors say we should eat many different kinds of food. Fruits and vegetables give our bodies vitamins and energy. Bread and rice give us the power to work and study. Meat and fish help us grow strong. We should drink a lot of water every day. It is also important to eat breakfast every morning. People who eat breakfast do better at school and at work. We should not eat too much sugar or fast food. Small changes in our diet can make a big difference to our health.',
+   vocab:['healthy','vitamins','energy','diet','difference','breakfast']},
+  {id:'a7',level:'B1',topic:'Environment',icon:'🌊',
+   title:'Plastic in Our Oceans',
+   text:'Every year, millions of tonnes of plastic enter the world\'s oceans. This plastic comes from rivers, beaches, and ships. Fish and seabirds often mistake plastic for food. When they eat plastic, it can block their stomachs and cause death. Plastic also breaks into tiny pieces called microplastics. These small particles are now found everywhere — in ocean water, in fish, and even in human blood. Scientists are worried because microplastics may affect our health in ways we do not fully understand yet. Many governments are now working to reduce plastic pollution by banning single-use plastic items.',
+   vocab:['tonnes','microplastics','particles','pollution','affect','reduce','banning']},
+  {id:'a8',level:'B1',topic:'Psychology',icon:'🧠',
+   title:'Why We Dream',
+   text:'Every night, while we sleep, our brains are very busy. We dream for about two hours each night, but we do not always remember our dreams. Scientists have studied dreams for many years, but they still do not fully understand them. Some scientists believe that dreams help us process our feelings and memories. Others think that dreaming helps the brain organize information from the day. Research also shows that people who do not get enough sleep have more emotional problems. Our bodies need sleep to repair themselves. During deep sleep, the brain removes waste products that can cause disease. Dreams may also help us prepare for difficult situations in our lives by letting us practice different outcomes in a safe place.',
+   vocab:['dream','process','memories','organize','emotional','research','repair','disease','outcomes']},
+  {id:'a9',level:'B2',topic:'Economics',icon:'📈',
+   title:'The Rise of Remote Work',
+   text:'The global shift towards remote work has fundamentally transformed the way millions of people approach their professional lives. What began as an emergency response to a global health crisis has evolved into a permanent feature of the modern workplace. Companies that once insisted on daily office attendance now offer flexible arrangements, acknowledging that productivity does not necessarily require physical presence. However, this transformation is not without its challenges. Many workers report difficulties in maintaining boundaries between their professional and personal lives when working from home. The absence of spontaneous social interactions that naturally occur in office environments has led some employees to feel isolated and disconnected from their colleagues. Furthermore, remote work has highlighted significant inequalities, as not all jobs can be performed remotely, creating a divide between those who have the privilege of working from home and those who must continue to work on site.',
+   vocab:['remote','fundamentally','transformed','professional','flexible','productivity','spontaneous','isolated','inequalities']},
+  {id:'a10',level:'B2',topic:'Science',icon:'🌌',
+   title:'The Search for Life Beyond Earth',
+   text:'The question of whether life exists elsewhere in the universe represents one of the most profound inquiries in the history of human civilization. Recent astronomical discoveries have dramatically increased the number of known exoplanets — worlds orbiting distant stars — many of which appear to exist within the so-called habitable zone where liquid water could theoretically exist on their surfaces. Astrobiologists argue that the presence of liquid water, a stable energy source, and the right chemical compounds are the fundamental prerequisites for life as we know it. The discovery of extremophiles — organisms that thrive in conditions previously considered incompatible with life, such as boiling hydrothermal vents and highly acidic environments — has considerably expanded our understanding of where life might survive. While definitive evidence of extraterrestrial life remains elusive, the scientific community remains cautiously optimistic that we are not alone.',
+   vocab:['profound','astronomical','exoplanets','habitable','astrobiologists','prerequisites','extremophiles','hydrothermal','extraterrestrial','elusive']},
+];
+
+// ==================== STATE ====================
+let ST=JSON.parse(localStorage.getItem('ru5')||'null')||{read:{},quizzes:[],scores:{},vocab:[]};
+function save(){localStorage.setItem('ru5',JSON.stringify(ST));}
+
+let currentArticle=null;
+let activeFilter='all';
+let popupWord=null;
+let QT={quiz:null,cur:0,correct:0};
+let studyIdx=0;
+let studyRevealed=false;
+
+// ==================== VOCAB BADGE ====================
+function updateVocabBadge(){
+  const badge=document.getElementById('vocabBadge');
+  const n=ST.vocab.length;
+  if(n>0){badge.textContent=n;badge.style.display='flex';}
+  else badge.style.display='none';
+}
+
+// ==================== LIBRARY ====================
+function renderLibrary(){
+  const grid=document.getElementById('articleGrid');
+  const filtered=activeFilter==='all'?ARTICLES:ARTICLES.filter(a=>a.level===activeFilter);
+  if(!filtered.length){grid.innerHTML='<div class="empty"><span class="empty-icon">📚</span><p>Энэ түвшинд текст байхгүй</p></div>';return;}
+  grid.innerHTML=filtered.map(a=>`
+    <div class="article-card" onclick="openReader('${a.id}')">
+      <div class="card-icon">${a.icon||'📄'}</div>
+      <div class="card-body">
+        <div class="card-title">${a.title}</div>
+        <div class="card-meta">
+          <span class="level-pill level-${a.level}">${a.level}</span>
+          <span class="card-topic">${a.topic}</span>
+        </div>
+      </div>
+      ${ST.read[a.id]?'<div class="card-read-badge">✓ Уншсан</div>':''}
+      <div class="card-arrow">›</div>
+    </div>`).join('');
+}
+
+function filterArticles(lvl,btn){
+  activeFilter=lvl;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLibrary();
+}
+
+// ==================== READER ====================
+function openReader(id){
+  const art=ARTICLES.find(a=>a.id===id);
+  if(!art)return;
+  currentArticle=art;
+  ST.read[id]=true;save();
+  document.getElementById('readerTitleBar').textContent=art.title;
+  document.getElementById('readerMeta').innerHTML=`
+    <span class="level-pill level-${art.level}">${art.level}</span>
+    <span style="font-size:0.8rem;color:var(--muted);">${art.topic}</span>`;
+  document.getElementById('readerTitle').textContent=art.title;
+  const wc=art.text.split(/\s+/).length;
+  document.getElementById('readerProgress').textContent=`~${wc} үг`;
+
+  // Tokenize — ALL words get .w class
+  const tokens=art.text.split(/(\s+)/);
+  let html='';
+  tokens.forEach(tok=>{
+    if(/^\s+$/.test(tok)){html+=tok;return;}
+    // Split punctuation
+    const match=tok.match(/^([^a-zA-Z']*)([a-zA-Z']+)([^a-zA-Z']*)$/);
+    if(match){
+      const pre=match[1],word=match[2],post=match[3];
+      const clean=word.toLowerCase();
+      const inVocab=ST.vocab.some(v=>v.en===clean);
+      const cls='w'+(inVocab?' in-vocab':'');
+      html+=pre+`<span class="${cls}" data-w="${clean}">${word}</span>`+post;
+    } else {
+      html+=tok;
+    }
+  });
+
+  document.getElementById('readerText').innerHTML=html;
+
+  // Attach events
+  document.querySelectorAll('#readerText .w').forEach(el=>{
+    el.addEventListener('click',e=>{e.stopPropagation();showWordPopup(e,el);});
+  });
+
+  // Vocab bar (key words)
+  const chips=art.vocab.map(w=>{
+    const d=D[w];if(!d)return'';
+    return`<div class="vocab-chip" data-w="${w}">
+      <div class="chip-en">${w}</div>
+      <div class="chip-mn">${d.mn}</div>
+    </div>`;
+  }).join('');
+  if(chips){
+    document.getElementById('vocabBar').style.display='block';
+    document.getElementById('vocabChips').innerHTML=chips;
+    document.querySelectorAll('.vocab-chip').forEach(el=>{
+      el.addEventListener('click',e=>{
+        e.stopPropagation();
+        showWordPopupAt(el.getBoundingClientRect().left,el.getBoundingClientRect().bottom+8,el.dataset.w);
+      });
+    });
+  } else {
+    document.getElementById('vocabBar').style.display='none';
+  }
+
+  switchScreen('reader');
+}
+
+function showWordPopup(e,el){
+  const word=el.dataset.w;
+  showWordPopupAt(e.clientX+10,e.clientY-10,word);
+}
+
+function showWordPopupAt(x,y,word){
+  const d=D[word];
+  const p=document.getElementById('popup');
+  document.getElementById('p-word').textContent=word;
+  if(d){
+    document.getElementById('p-type').textContent=d.type||'';
+    document.getElementById('p-mn').textContent=d.mn;
+    const ex=document.getElementById('p-ex');
+    ex.textContent=d.ex?`"${d.ex}"`:'';
+    ex.style.display=d.ex?'block':'none';
+    document.getElementById('popup-footer')||null;
+    document.querySelector('.popup-footer').style.display='block';
+  } else {
+    document.getElementById('p-type').textContent='';
+    document.getElementById('p-mn').textContent='Орчуулга байхгүй';
+    document.getElementById('p-ex').style.display='none';
+    document.querySelector('.popup-footer').style.display='none';
+  }
+  popupWord=word;
+  // Update add button state
+  updateAddBtn();
+  const px=Math.min(x,window.innerWidth-280);
+  const py=y>160?y-150:y+20;
+  p.style.left=px+'px';p.style.top=py+'px';
+  p.classList.add('show');
+}
+
+function updateAddBtn(){
+  if(!popupWord)return;
+  const btn=document.getElementById('p-add-btn');
+  const icon=document.getElementById('p-add-icon');
+  const txt=document.getElementById('p-add-text');
+  const already=ST.vocab.some(v=>v.en===popupWord);
+  if(already){
+    btn.classList.add('added');
+    icon.textContent='✓';
+    txt.textContent='Үгийн санд байна';
+  } else {
+    btn.classList.remove('added');
+    icon.textContent='＋';
+    txt.textContent='Үгийн санд нэмэх';
+  }
+}
+
+function addFromPopup(){
+  if(!popupWord)return;
+  const d=D[popupWord];
+  const already=ST.vocab.some(v=>v.en===popupWord);
+  if(already){
+    // Remove
+    ST.vocab=ST.vocab.filter(v=>v.en!==popupWord);
+    save();
+    updateAddBtn();
+    updateVocabBadge();
+    refreshWordStyles();
+    showToast('Үгийн сангаас хасагдлаа');
+  } else {
+    ST.vocab.push({en:popupWord,mn:d?d.mn:'',type:d?d.type:'',ex:d?d.ex||'':''});
+    save();
+    updateAddBtn();
+    updateVocabBadge();
+    refreshWordStyles();
+    showToast('✓ Үгийн санд нэмэгдлээ!');
+  }
+}
+
+function refreshWordStyles(){
+  document.querySelectorAll('#readerText .w').forEach(el=>{
+    const inV=ST.vocab.some(v=>v.en===el.dataset.w);
+    el.classList.toggle('in-vocab',inV);
+  });
+}
+
+document.addEventListener('click',()=>document.getElementById('popup').classList.remove('show'));
+
+function backToLibrary(){
+  switchScreen('library');
+  renderLibrary();
+  document.getElementById('popup').classList.remove('show');
+}
+
+// ==================== VOCAB SCREEN ====================
+function renderVocabScreen(){
+  const grid=document.getElementById('vocabCardsGrid');
+  const sub=document.getElementById('vocabScreenSub');
+  if(!ST.vocab.length){
+    sub.textContent='Уншлага дахь үгс дарж ＋ товч дарахад энд хадгалагдана';
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1"><span class="empty-icon">🗂</span><p>Үгийн сан хоосон байна</p></div>';
+    return;
+  }
+  sub.textContent=`${ST.vocab.length} үг хадгалагдсан байна`;
+  grid.innerHTML=ST.vocab.map((v,i)=>`
+    <div class="vc">
+      <div class="vc-type">${v.type||''}</div>
+      <div class="vc-en">${v.en}</div>
+      <div class="vc-mn">${v.mn}</div>
+      <button class="vc-del" onclick="removeVocab(${i},event)" title="Устгах">✕</button>
+    </div>`).join('');
+}
+
+function removeVocab(i,e){
+  e.stopPropagation();
+  ST.vocab.splice(i,1);
+  save();
+  updateVocabBadge();
+  renderVocabScreen();
+  showToast('Үгийн сангаас хасагдлаа');
+}
+
+function clearAllVocab(){
+  if(!ST.vocab.length)return;
+  if(confirm('Бүх үгийг устгах уу?')){
+    ST.vocab=[];save();updateVocabBadge();renderVocabScreen();showToast('Үгийн сан цэвэрлэгдлээ');
+  }
+}
+
+// ==================== STUDY MODE ====================
+function startStudy(){
+  if(!ST.vocab.length){showToast('Үгийн сан хоосон байна');return;}
+  studyIdx=0;studyRevealed=false;
+  document.getElementById('studyOverlay').classList.add('show');
+  renderStudyCard();
+}
+function closeStudy(){document.getElementById('studyOverlay').classList.remove('show');}
+function renderStudyCard(){
+  const v=ST.vocab[studyIdx];
+  const total=ST.vocab.length;
+  document.getElementById('studyProg').textContent=`${studyIdx+1} / ${total}`;
+  document.getElementById('studyEn').textContent=v.en;
+  document.getElementById('studyType').textContent=v.type||'';
+  document.getElementById('studyMn').textContent=v.mn;
+  document.getElementById('studyMn').classList.remove('show');
+  document.getElementById('studyHint').style.display='block';
+  studyRevealed=false;
+}
+function revealStudy(){
+  if(!studyRevealed){
+    document.getElementById('studyMn').classList.add('show');
+    document.getElementById('studyHint').style.display='none';
+    studyRevealed=true;
+  }
+}
+function studyNav(dir){
+  studyIdx=(studyIdx+dir+ST.vocab.length)%ST.vocab.length;
+  renderStudyCard();
+}
+
+// ==================== QUIZ LIST ====================
+function renderQuizList(){
+  const el=document.getElementById('quizCards');
+  if(!ST.quizzes.length){
+    el.innerHTML='<div class="empty"><span class="empty-icon">📝</span><p>Тест байхгүй байна.<br>+ Тест нэмэх дарж үүсгэнэ үү.</p></div>';
+    return;
+  }
+  el.innerHTML=ST.quizzes.map(q=>{
+    const sc=ST.scores[q.id];
+    return`<div class="quiz-item" onclick="startQuiz('${q.id}')">
+      <div style="font-size:1.5rem;">${q.icon||'📝'}</div>
+      <div class="quiz-item-body">
+        <div class="quiz-item-title">${q.title}</div>
+        <div class="quiz-item-meta">${q.level} • ${q.questions.length} асуулт</div>
+      </div>
+      ${sc?`<div class="quiz-item-score">${sc.score}/${sc.total}</div>`:''}
+      <div style="color:var(--muted);font-size:1rem;">›</div>
+    </div>`;
+  }).join('');
+}
+
+// ==================== ADD QUIZ ====================
+let qCount=0;
+function toggleAddForm(){
+  const f=document.getElementById('quizForm');
+  f.classList.toggle('open');
+  if(f.classList.contains('open')&&!document.getElementById('qBuilderList').children.length){
+    qCount=0;document.getElementById('qBuilderList').innerHTML='';addQuestion();
+  }
+}
+function addQuestion(){
+  qCount++;
+  const id='q'+qCount;
+  const div=document.createElement('div');
+  div.className='q-builder';div.id=id;
+  div.innerHTML=`
+    <div class="q-num">АСУУЛТ ${qCount}</div>
+    <button class="q-delete" onclick="document.getElementById('${id}').remove()">✕</button>
+    <input class="form-input" placeholder="Асуулт бичнэ үү..." style="margin-bottom:10px;" data-role="qtext">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:8px;">● Зөв хариултын радио товчийг дарна</div>
+    <div class="opts-grid">
+      ${[0,1,2,3].map(i=>`<div class="opt-row"><input type="radio" name="ans_${id}" class="opt-radio" value="${i}" ${i===0?'checked':''}><input class="opt-input" placeholder="Сонголт ${String.fromCharCode(65+i)}" data-role="opt"></div>`).join('')}
+    </div>`;
+  document.getElementById('qBuilderList').appendChild(div);
+}
+function saveQuiz(){
+  const title=document.getElementById('qTitle').value.trim();
+  const level=document.getElementById('qLevel').value;
+  if(!title){showToast('Нэр оруулна уу');return;}
+  const builders=document.querySelectorAll('.q-builder');
+  const questions=[];
+  for(const b of builders){
+    const qtext=b.querySelector('[data-role=qtext]').value.trim();
+    if(!qtext)continue;
+    const opts=[...b.querySelectorAll('[data-role=opt]')].map(i=>i.value.trim());
+    if(opts.some(o=>!o)){showToast('Бүх сонголтыг бөглөнө үү');return;}
+    const checked=b.querySelector('.opt-radio:checked');
+    questions.push({q:qtext,opts,ans:checked?parseInt(checked.value):0});
+  }
+  if(!questions.length){showToast('Дор хаяж нэг асуулт нэмнэ үү');return;}
+  const icons=['📝','🧠','⭐','🎯','🔥','💡','🌟'];
+  const quiz={id:'qz'+Date.now(),title,level,questions,icon:icons[Math.floor(Math.random()*icons.length)],created:new Date().toLocaleDateString('mn-MN')};
+  ST.quizzes.unshift(quiz);save();
+  document.getElementById('qTitle').value='';
+  document.getElementById('qBuilderList').innerHTML='';
+  qCount=0;
+  document.getElementById('quizForm').classList.remove('open');
+  renderQuizList();showToast('✓ Тест хадгалагдлаа!');
+}
+
+// ==================== TAKE QUIZ ====================
+function startQuiz(id){
+  const quiz=ST.quizzes.find(q=>q.id===id);
+  if(!quiz)return;
+  QT={quiz,cur:0,correct:0};
+  document.getElementById('takeTitleEl').textContent=quiz.title;
+  document.getElementById('quizListView').style.display='none';
+  document.getElementById('quizTakeView').classList.add('active');
+  renderQCard();
+}
+function renderQCard(){
+  const q=QT.quiz.questions[QT.cur];
+  const tot=QT.quiz.questions.length;
+  document.getElementById('takeProgEl').textContent=`${QT.cur+1} / ${tot}`;
+  document.getElementById('progFill').style.width=(QT.cur/tot*100)+'%';
+  const opts=q.opts.map((o,i)=>`<button class="q-opt" onclick="answerQ(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+  document.getElementById('qCardArea').innerHTML=`<div class="q-card"><div class="q-label">АСУУЛТ ${QT.cur+1}</div><div class="q-text">${q.q}</div><div class="q-opts">${opts}</div><div class="q-fb" id="qfb"></div></div>`;
+}
+function answerQ(idx){
+  const q=QT.quiz.questions[QT.cur];
+  const btns=document.querySelectorAll('.q-opt');
+  btns.forEach(b=>b.disabled=true);
+  const ok=idx===q.ans;
+  if(ok)QT.correct++;
+  btns[idx].classList.add(ok?'correct':'wrong');
+  if(!ok)btns[q.ans].classList.add('correct');
+  const fb=document.getElementById('qfb');
+  fb.textContent=ok?'✓ Зөв!':'✗ Буруу. Зөв хариулт: '+String.fromCharCode(65+q.ans)+'. '+q.opts[q.ans];
+  fb.className='q-fb show '+(ok?'ok':'bad');
+  setTimeout(()=>{QT.cur++;if(QT.cur>=QT.quiz.questions.length)showQuizResult();else renderQCard();},1800);
+}
+function showQuizResult(){
+  const tot=QT.quiz.questions.length,sc=QT.correct;
+  ST.scores[QT.quiz.id]={score:sc,total:tot,date:new Date().toLocaleDateString('mn-MN')};save();
+  const pct=Math.round(sc/tot*100);
+  const msg=sc===tot?'Төгс! 🏆':sc>=tot*0.8?'Гайхалтай! 🌟':sc>=tot*0.6?'Сайн байна! 📖':'Дахин оролдоорой 💪';
+  document.getElementById('progFill').style.width='100%';
+  document.getElementById('qCardArea').innerHTML=`
+    <div class="result-box">
+      <div class="result-big">${sc}<span>/${tot}</span></div>
+      <div class="result-sub">${msg} · ${pct}%</div>
+      <div class="result-detail"><div class="result-detail-title">ДҮНГИЙН ХУРААНГУЙ</div>
+        <div style="display:flex;gap:24px;">
+          <div><div style="font-size:1.4rem;color:var(--green);font-weight:600;">${sc}</div><div style="font-size:0.75rem;color:var(--muted);">Зөв</div></div>
+          <div><div style="font-size:1.4rem;color:var(--red);font-weight:600;">${tot-sc}</div><div style="font-size:0.75rem;color:var(--muted);">Буруу</div></div>
+          <div><div style="font-size:1.4rem;color:var(--accent);font-weight:600;">${pct}%</div><div style="font-size:0.75rem;color:var(--muted);">Оноо</div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-main" style="flex:1;" onclick="startQuiz('${QT.quiz.id}')">🔄 Дахин</button>
+        <button class="btn-ghost" onclick="endQuiz()" style="flex:1;">← Буцах</button>
+      </div>
+    </div>`;
+  renderQuizList();
+}
+function endQuiz(){
+  document.getElementById('quizListView').style.display='block';
+  document.getElementById('quizTakeView').classList.remove('active');
+  document.getElementById('qCardArea').innerHTML='';
+}
+
+// ==================== NAVIGATION ====================
+function switchTab(name,btn){
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(name==='library'){switchScreen('library');renderLibrary();}
+  else if(name==='vocab'){switchScreen('vocab');renderVocabScreen();}
+  else if(name==='quiz'){switchScreen('quiz');renderQuizList();endQuiz();}
+}
+function switchScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('scr-'+name).classList.add('active');
+}
+
+// ==================== TOAST ====================
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ==================== INIT ====================
+renderLibrary();
+updateVocabBadge();
+</script>
+</body>
+</html>
